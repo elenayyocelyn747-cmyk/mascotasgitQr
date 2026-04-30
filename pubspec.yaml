@@ -1,0 +1,33 @@
+name: mascotas_qr_nuevo
+description: "A new Flutter project."
+publish_to: 'none'
+
+version: 1.0.0+1
+
+environment:
+  sdk: ^3.11.0
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  # Supabase (para backend y base de datos)
+  supabase_flutter: ^2.12.4
+
+  # QR (para generar y escanear códigos)
+  qr_flutter: ^4.1.0
+
+  # Image Picker (para fotos locales)
+  image_picker: ^1.0.7
+  mobile_scanner: ^7.2.0
+
+  # Para pedir permisos en tiempo de ejecución (Android 13+)
+  permission_handler: ^11.0.0
+  url_launcher: ^6.1.7
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0
+
+flutter:
+  uses-material-design: true
