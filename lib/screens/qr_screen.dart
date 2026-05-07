@@ -1,59 +1,43 @@
 import 'package:flutter/material.dart';
-import 'package:qr_flutter/qr_flutter.dart';
+import 'package:mobile_scanner/mobile_scanner.dart';
 
-class QrScreen extends StatelessWidget {
+class QrScreen extends StatefulWidget {
   const QrScreen({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    final qrUrl = ModalRoute.of(context)!.settings.arguments as String;
+  State<QrScreen> createState() => _QrScreenState();
+}
 
+class _QrScreenState extends State<QrScreen> {
+  bool _scanned = false;
+
+  @override
+  Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text("Código QR")),
-      body: Padding(
-        padding: const EdgeInsets.all(24.0),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const Text(
-              "Escanea este código para ver el perfil de tu mascota",
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.w600,
-              ),
+      appBar: AppBar(title: const Text("Escanear QR")),
+      body: Column(
+        children: [
+          const Padding(
+            padding: EdgeInsets.all(16),
+            child: Text(
+              "Apunta la cámara al código QR de la mascota",
+              style: TextStyle(fontSize: 16),
             ),
-            const SizedBox(height: 24),
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                border: Border.all(color: Colors.teal, width: 3),
-                borderRadius: BorderRadius.circular(16),
-                color: Colors.white,
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.1),
-                    blurRadius: 8,
-                    offset: const Offset(0, 4),
-                  ),
-                ],
-              ),
-              child: QrImageView(
-                data: qrUrl,
-                version: QrVersions.auto,
-                size: 250.0,
-              ),
-            ),
-            const SizedBox(height: 24),
-            FilledButton.icon(
-              onPressed: () {
-                Navigator.pushNamed(context, '/scan');
+          ),
+          Expanded(
+            child: MobileScanner(
+              onDetect: (capture) {
+                if (_scanned) return;
+                final barcode = capture.barcodes.first;
+                final petId = barcode.rawValue;
+                if (petId != null) {
+                  setState(() => _scanned = true);
+                  Navigator.pushNamed(context, '/petDetail', arguments: petId);
+                }
               },
-              icon: const Icon(Icons.camera_alt),
-              label: const Text("Escanear otro QR"),
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }

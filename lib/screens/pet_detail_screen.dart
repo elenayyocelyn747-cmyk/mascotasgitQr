@@ -1,162 +1,165 @@
-import 'dart:typed_data';
 import 'package:flutter/material.dart';
-import 'package:image_picker/image_picker.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:qr_flutter/qr_flutter.dart';
 
 class PetDetailScreen extends StatefulWidget {
-  const PetDetailScreen({super.key});
+  final String petId;
+
+  const PetDetailScreen({super.key, required this.petId});
 
   @override
   State<PetDetailScreen> createState() => _PetDetailScreenState();
 }
 
 class _PetDetailScreenState extends State<PetDetailScreen> {
-  final nameController = TextEditingController();
-  final speciesController = TextEditingController();
-  final ageController = TextEditingController();
-  final diseasesController = TextEditingController();
-  final ownerPhoneController = TextEditingController();
-  final addressController = TextEditingController();
+  final supabase = Supabase.instance.client;
+  Map<String, dynamic>? pet;
+  bool _loading = false;
 
-  Uint8List? _imageBytes;
-  bool isLoading = false;
-
-  Future<void> pickImage() async {
-    final picker = ImagePicker();
-    final picked = await picker.pickImage(source: ImageSource.gallery);
-    if (picked != null) {
-      final bytes = await picked.readAsBytes();
-      setState(() => _imageBytes = bytes);
-    }
+  @override
+  void initState() {
+    super.initState();
+    _loadPet();
   }
 
-  Future<void> savePet() async {
-    if (_imageBytes == null) return;
-
-    setState(() => isLoading = true);
-
-    final user = Supabase.instance.client.auth.currentUser;
-
-    // Subir imagen a Supabase Storage
-    final fileName = "${DateTime.now().millisecondsSinceEpoch}.jpg";
-    await Supabase.instance.client.storage
+  Future<void> _loadPet() async {
+    setState(() => _loading = true);
+    final userId = supabase.auth.currentUser!.id;
+    final response = await supabase
         .from('pets')
-        .uploadBinary(fileName, _imageBytes!);
+        .select()
+        .eq('id', widget.petId)
+        .eq('user_id', userId)
+        .maybeSingle();
 
-    final publicUrl = Supabase.instance.client.storage
-        .from('pets')
-        .getPublicUrl(fileName);
+    if (!mounted) return;
 
-    // Insertar mascota en la tabla con campos extra
-    await Supabase.instance.client.from('pets').insert({
-      'name': nameController.text,
-      'species': speciesController.text,
-      'age': int.tryParse(ageController.text) ?? 0,
-      'photoUrl': publicUrl,
-      'diseases': diseasesController.text,
-      'ownerPhone': ownerPhoneController.text,
-      'address': addressController.text.isEmpty ? null : addressController.text,
-      'user_id': user!.id,
+    setState(() {
+      pet = response;
+      _loading = false;
     });
-
-    setState(() => isLoading = false);
-
-    if (mounted) {
-      Navigator.pop(context, true);
-    }
   }
+
+  Future<void> _deletePet() async {
+    final userId = supabase.auth.currentUser!.id;
+    await supabase
+        .from('pets')
+        .delete()
+        .eq('id', widget.petId)
+        .eq('user_id', userId);
+
+    if (!mounted) return;
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text("Mascota eliminada")),
+    );
+    Navigator.pop(context);
+  }
+
+void _showQrCode() {
+  final qrUrl = 
+      "https://lenas-projects-db973962.vercel.app/pet.html?id=${widget.petId}";
+
+  showDialog(
+    context: context,
+    builder: (_) => AlertDialog(
+      title: const Text("Código QR"),
+      content: SizedBox(
+        height: 220,
+        width: 220,
+        child: Center(
+          child: QrImageView(
+            data: qrUrl,
+            version: QrVersions.auto,
+            size: 200.0,
+          ),
+        ),
+      ),
+    ),
+  );
+}
+
+
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text("Agregar Mascota")),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: ListView(
-          children: [
-            TextField(
-              controller: nameController,
-              decoration: const InputDecoration(
-                labelText: "Nombre",
-                prefixIcon: Icon(Icons.pets),
-                border: OutlineInputBorder(),
-              ),
-            ),
-            const SizedBox(height: 16),
-            TextField(
-              controller: speciesController,
-              decoration: const InputDecoration(
-                labelText: "Especie",
-                prefixIcon: Icon(Icons.category),
-                border: OutlineInputBorder(),
-              ),
-            ),
-            const SizedBox(height: 16),
-            TextField(
-              controller: ageController,
-              keyboardType: TextInputType.number,
-              decoration: const InputDecoration(
-                labelText: "Edad",
-                prefixIcon: Icon(Icons.cake),
-                border: OutlineInputBorder(),
-              ),
-            ),
-            const SizedBox(height: 16),
-            TextField(
-              controller: diseasesController,
-              decoration: const InputDecoration(
-                labelText: "Enfermedades",
-                prefixIcon: Icon(Icons.healing),
-                border: OutlineInputBorder(),
-              ),
-            ),
-            const SizedBox(height: 16),
-            TextField(
-              controller: ownerPhoneController,
-              keyboardType: TextInputType.phone,
-              decoration: const InputDecoration(
-                labelText: "Número del dueño",
-                prefixIcon: Icon(Icons.phone),
-                border: OutlineInputBorder(),
-              ),
-            ),
-            const SizedBox(height: 16),
-            TextField(
-              controller: addressController,
-              decoration: const InputDecoration(
-                labelText: "Dirección (opcional)",
-                prefixIcon: Icon(Icons.home),
-                border: OutlineInputBorder(),
-              ),
-            ),
-            const SizedBox(height: 24),
-            _imageBytes != null
-                ? Image.memory(_imageBytes!, height: 150)
-                : const Text("No hay imagen seleccionada"),
-            const SizedBox(height: 16),
-            FilledButton.icon(
-              onPressed: pickImage,
-              icon: const Icon(Icons.image),
-              label: const Text("Seleccionar foto"),
-            ),
-            const SizedBox(height: 24),
-            FilledButton.icon(
-              onPressed: isLoading ? null : savePet,
-              icon: isLoading
-                  ? const SizedBox(
-                      width: 20,
-                      height: 20,
-                      child: CircularProgressIndicator(
-                        strokeWidth: 2,
-                        color: Colors.white,
+      appBar: AppBar(title: const Text("Detalle de Mascota")),
+      body: _loading
+          ? const Center(child: CircularProgressIndicator())
+          : pet == null
+              ? const Center(child: Text("Mascota no encontrada"))
+              : Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Card(
+                    elevation: 6,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    child: Padding(
+                      padding: const EdgeInsets.all(24),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Center(
+                            child: CircleAvatar(
+                              radius: 50,
+                              backgroundImage: pet!['photoUrl'] != null
+                                  ? NetworkImage(pet!['photoUrl'])
+                                  : const AssetImage('assets/pet_placeholder.png')
+                                      as ImageProvider,
+                            ),
+                          ),
+                          const SizedBox(height: 16),
+                          Text(
+                            pet!['name'] ?? 'Sin nombre',
+                            style: const TextStyle(
+                              fontSize: 22,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.teal,
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          Text("Especie: ${pet!['species'] ?? 'N/A'}"),
+                          Text("Edad: ${pet!['age'] ?? 'N/A'}"),
+                          Text("Enfermedades: ${pet!['diseases'] ?? 'N/A'}"),
+                          Text("Teléfono: ${pet!['ownerPhone'] ?? 'N/A'}"),
+                          Text("Dirección: ${pet!['address'] ?? 'N/A'}"),
+                          const SizedBox(height: 24),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                            children: [
+                              ElevatedButton.icon(
+                                onPressed: () {
+                                  Navigator.pushNamed(
+                                    context,
+                                    '/editPet',
+                                    arguments: widget.petId,
+                                  );
+                                },
+                                icon: const Icon(Icons.edit),
+                                label: const Text("Editar"),
+                              ),
+                              ElevatedButton.icon(
+                                onPressed: _deletePet,
+                                icon: const Icon(Icons.delete),
+                                label: const Text("Eliminar"),
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: Colors.redAccent,
+                                ),
+                              ),
+                              ElevatedButton.icon(
+                                onPressed: _showQrCode,
+                                icon: const Icon(Icons.qr_code),
+                                label: const Text("QR"),
+                              ),
+                            ],
+                          ),
+                        ],
                       ),
-                    )
-                  : const Icon(Icons.save),
-              label: Text(isLoading ? "Guardando..." : "Guardar"),
-            ),
-          ],
-        ),
-      ),
+                    ),
+                  ),
+                ),
     );
   }
 }

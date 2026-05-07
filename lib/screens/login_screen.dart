@@ -9,20 +9,33 @@ class LoginScreen extends StatefulWidget {
 }
 
 class _LoginScreenState extends State<LoginScreen> {
-  final emailController = TextEditingController();
-  final passwordController = TextEditingController();
-  bool isLoading = false;
+  final supabase = Supabase.instance.client;
+  final _emailController = TextEditingController();
+  final _passwordController = TextEditingController();
+  bool _loading = false;
 
-  Future<void> login() async {
-    setState(() => isLoading = true);
-    final response = await Supabase.instance.client.auth.signInWithPassword(
-      email: emailController.text,
-      password: passwordController.text,
-    );
-    setState(() => isLoading = false);
+  Future<void> _login() async {
+    setState(() => _loading = true);
+    try {
+      final response = await supabase.auth.signInWithPassword(
+        email: _emailController.text.trim(),
+        password: _passwordController.text.trim(),
+      );
 
-    if (response.session != null) {
-      Navigator.pushReplacementNamed(context, '/home');
+      if (response.session != null) {
+        if (!mounted) return;
+        Navigator.pushReplacementNamed(context, '/home');
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("Credenciales inválidas")),
+        );
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Error: $e"), backgroundColor: Colors.redAccent),
+      );
+    } finally {
+      setState(() => _loading = false);
     }
   }
 
@@ -31,49 +44,35 @@ class _LoginScreenState extends State<LoginScreen> {
     return Scaffold(
       appBar: AppBar(title: const Text("Iniciar Sesión")),
       body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: ListView(
+        padding: const EdgeInsets.all(16),
+        child: Column(
           children: [
-            const Icon(Icons.pets, size: 80, color: Colors.teal),
-            const SizedBox(height: 24),
             TextField(
-              controller: emailController,
+              controller: _emailController,
               decoration: const InputDecoration(
-                labelText: "Correo electrónico",
+                labelText: "Correo",
                 prefixIcon: Icon(Icons.email),
-                border: OutlineInputBorder(),
               ),
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 12),
             TextField(
-              controller: passwordController,
+              controller: _passwordController,
               obscureText: true,
               decoration: const InputDecoration(
                 labelText: "Contraseña",
                 prefixIcon: Icon(Icons.lock),
-                border: OutlineInputBorder(),
               ),
             ),
-            const SizedBox(height: 24),
-            FilledButton.icon(
-              onPressed: isLoading ? null : login,
-              icon: isLoading
-                  ? const SizedBox(
-                      width: 20,
-                      height: 20,
-                      child: CircularProgressIndicator(
-                        strokeWidth: 2,
-                        color: Colors.white,
-                      ),
-                    )
-                  : const Icon(Icons.login),
-              label: Text(isLoading ? "Entrando..." : "Entrar"),
-            ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 20),
+            _loading
+                ? const CircularProgressIndicator()
+                : ElevatedButton.icon(
+                    onPressed: _login,
+                    icon: const Icon(Icons.login),
+                    label: const Text("Entrar"),
+                  ),
             TextButton(
-              onPressed: () {
-                Navigator.pushNamed(context, '/register');
-              },
+              onPressed: () => Navigator.pushNamed(context, '/register'),
               child: const Text("¿No tienes cuenta? Regístrate"),
             ),
           ],

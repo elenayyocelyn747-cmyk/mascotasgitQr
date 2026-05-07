@@ -9,20 +9,32 @@ class RegisterScreen extends StatefulWidget {
 }
 
 class _RegisterScreenState extends State<RegisterScreen> {
-  final emailController = TextEditingController();
-  final passwordController = TextEditingController();
-  bool isLoading = false;
+  final supabase = Supabase.instance.client;
+  final _emailController = TextEditingController();
+  final _passwordController = TextEditingController();
+  bool _loading = false;
 
-  Future<void> register() async {
-    setState(() => isLoading = true);
-    final response = await Supabase.instance.client.auth.signUp(
-      email: emailController.text,
-      password: passwordController.text,
-    );
-    setState(() => isLoading = false);
+  Future<void> _register() async {
+    setState(() => _loading = true);
+    try {
+      final response = await supabase.auth.signUp(
+        email: _emailController.text.trim(),
+        password: _passwordController.text.trim(),
+      );
 
-    if (response.user != null) {
-      Navigator.pushReplacementNamed(context, '/home');
+      if (response.user != null) {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("Registro exitoso, inicia sesión")),
+        );
+        Navigator.pushReplacementNamed(context, '/login');
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Error: $e"), backgroundColor: Colors.redAccent),
+      );
+    } finally {
+      setState(() => _loading = false);
     }
   }
 
@@ -31,49 +43,35 @@ class _RegisterScreenState extends State<RegisterScreen> {
     return Scaffold(
       appBar: AppBar(title: const Text("Registro")),
       body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: ListView(
+        padding: const EdgeInsets.all(16),
+        child: Column(
           children: [
-            const Icon(Icons.person_add, size: 80, color: Colors.teal),
-            const SizedBox(height: 24),
             TextField(
-              controller: emailController,
+              controller: _emailController,
               decoration: const InputDecoration(
-                labelText: "Correo electrónico",
+                labelText: "Correo",
                 prefixIcon: Icon(Icons.email),
-                border: OutlineInputBorder(),
               ),
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 12),
             TextField(
-              controller: passwordController,
+              controller: _passwordController,
               obscureText: true,
               decoration: const InputDecoration(
                 labelText: "Contraseña",
                 prefixIcon: Icon(Icons.lock),
-                border: OutlineInputBorder(),
               ),
             ),
-            const SizedBox(height: 24),
-            FilledButton.icon(
-              onPressed: isLoading ? null : register,
-              icon: isLoading
-                  ? const SizedBox(
-                      width: 20,
-                      height: 20,
-                      child: CircularProgressIndicator(
-                        strokeWidth: 2,
-                        color: Colors.white,
-                      ),
-                    )
-                  : const Icon(Icons.check),
-              label: Text(isLoading ? "Registrando..." : "Registrarse"),
-            ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 20),
+            _loading
+                ? const CircularProgressIndicator()
+                : ElevatedButton.icon(
+                    onPressed: _register,
+                    icon: const Icon(Icons.person_add),
+                    label: const Text("Registrarse"),
+                  ),
             TextButton(
-              onPressed: () {
-                Navigator.pushReplacementNamed(context, '/login');
-              },
+              onPressed: () => Navigator.pushNamed(context, '/login'),
               child: const Text("¿Ya tienes cuenta? Inicia sesión"),
             ),
           ],
