@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -27,12 +28,18 @@ class _LoginScreenState extends State<LoginScreen> {
         Navigator.pushReplacementNamed(context, '/home');
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("Credenciales inválidas")),
+          const SnackBar(
+            content: Text("Correo o contraseña incorrectos"),
+            backgroundColor: Colors.redAccent,
+          ),
         );
       }
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Error: $e"), backgroundColor: Colors.redAccent),
+        const SnackBar(
+          content: Text("Correo o contraseña incorrectos"),
+          backgroundColor: Colors.redAccent,
+        ),
       );
     } finally {
       setState(() => _loading = false);
@@ -42,40 +49,94 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text("Iniciar Sesión")),
-      body: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          children: [
-            TextField(
-              controller: _emailController,
-              decoration: const InputDecoration(
-                labelText: "Correo",
-                prefixIcon: Icon(Icons.email),
+      body: Container(
+        // 👇 Fondo con gradiente
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            colors: [Colors.teal, Colors.blueAccent],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+        ),
+        child: Center(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(24),
+            child: Card(
+              elevation: 8,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(20),
+              ),
+              child: Padding(
+                padding: const EdgeInsets.all(24),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(Icons.pets, size: 80, color: Colors.teal),
+                    const SizedBox(height: 20),
+                    Text(
+                      "Iniciar Sesión",
+                      style: GoogleFonts.poppins(
+                        fontSize: 26,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.teal,
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+                    TextField(
+                      controller: _emailController,
+                      decoration: InputDecoration(
+                        labelText: "Correo electrónico",
+                        prefixIcon: const Icon(Icons.email),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        filled: true,
+                        fillColor: Colors.grey[100],
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    TextField(
+                      controller: _passwordController,
+                      obscureText: true,
+                      decoration: InputDecoration(
+                        labelText: "Contraseña",
+                        prefixIcon: const Icon(Icons.lock),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        filled: true,
+                        fillColor: Colors.grey[100],
+                      ),
+                    ),
+                    const SizedBox(height: 24),
+                    _loading
+                        ? const CircularProgressIndicator()
+                        : ElevatedButton.icon(
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.teal,
+                              minimumSize: const Size(double.infinity, 50),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                            ),
+                            onPressed: _login,
+                            icon: const Icon(Icons.login),
+                            label: const Text("Entrar"),
+                          ),
+                    const SizedBox(height: 12),
+                    TextButton(
+                      onPressed: () =>
+                          Navigator.pushNamed(context, '/register'),
+                      child: const Text(
+                        "¿No tienes cuenta? Regístrate",
+                        style: TextStyle(color: Colors.blueAccent),
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
-            const SizedBox(height: 12),
-            TextField(
-              controller: _passwordController,
-              obscureText: true,
-              decoration: const InputDecoration(
-                labelText: "Contraseña",
-                prefixIcon: Icon(Icons.lock),
-              ),
-            ),
-            const SizedBox(height: 20),
-            _loading
-                ? const CircularProgressIndicator()
-                : ElevatedButton.icon(
-                    onPressed: _login,
-                    icon: const Icon(Icons.login),
-                    label: const Text("Entrar"),
-                  ),
-            TextButton(
-              onPressed: () => Navigator.pushNamed(context, '/register'),
-              child: const Text("¿No tienes cuenta? Regístrate"),
-            ),
-          ],
+          ),
         ),
       ),
     );

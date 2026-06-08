@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});
 
   Future<void> _logout(BuildContext context) async {
-    await Supabase.instance.client.auth.signOut();
+    final supabase = Supabase.instance.client;
+    await supabase.auth.signOut();
     if (context.mounted) {
       Navigator.pushReplacementNamed(context, '/login');
     }
@@ -13,38 +15,81 @@ class ProfileScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final user = Supabase.instance.client.auth.currentUser;
+    final supabase = Supabase.instance.client;
+    final user = supabase.auth.currentUser;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Scaffold(
-      appBar: AppBar(title: const Text("Perfil de Usuario")),
-      body: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Card(
-          elevation: 6,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
+      appBar: AppBar(
+        title: Text(
+          "Perfil",
+          style: GoogleFonts.poppins(
+            fontWeight: FontWeight.bold,
           ),
-          child: Padding(
-            padding: const EdgeInsets.all(24),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Icon(Icons.person, size: 64, color: Colors.teal),
-                const SizedBox(height: 16),
-                Text(
-                  "Correo: ${user?.email ?? 'No disponible'}",
-                  style: const TextStyle(fontSize: 18),
+        ),
+        backgroundColor: Colors.teal,
+        centerTitle: true,
+      ),
+      body: Container(
+        // 👇 Fondo con gradiente adaptado
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            colors: isDark
+                ? [Colors.black, Colors.grey[900]!]
+                : [Colors.teal, Colors.blueAccent],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+        ),
+        child: SafeArea(
+          child: Center(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.all(24),
+              child: Card(
+                elevation: 8,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(20),
                 ),
-                const SizedBox(height: 24),
-                ElevatedButton.icon(
-                  onPressed: () => _logout(context),
-                  icon: const Icon(Icons.logout),
-                  label: const Text("Cerrar sesión"),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.redAccent,
+                child: Padding(
+                  padding: const EdgeInsets.all(24),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      CircleAvatar(
+                        radius: 50,
+                        backgroundColor: Colors.teal[100],
+                        child: const Icon(Icons.person,
+                            size: 50, color: Colors.teal),
+                      ),
+                      const SizedBox(height: 16),
+                      Text(
+                        user?.email ?? "Sin correo",
+                        style: GoogleFonts.poppins(
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.teal,
+                        ),
+                      ),
+                      const SizedBox(height: 32),
+                      SizedBox(
+                        width: double.infinity,
+                        child: ElevatedButton.icon(
+                          style: ElevatedButton.styleFrom(
+                            minimumSize: const Size(double.infinity, 50),
+                            backgroundColor: Colors.redAccent,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                          ),
+                          onPressed: () => _logout(context),
+                          icon: const Icon(Icons.logout),
+                          label: const Text("Cerrar sesión"),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
-              ],
+              ),
             ),
           ),
         ),
