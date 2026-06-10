@@ -50,7 +50,17 @@ class _HomeScreenState extends State<HomeScreen> {
         .update({'isFavorite': newValue})
         .eq('id', pet['id']);
 
-    await _loadPets(); // 👈 refrescamos manualmente
+    await _loadPets(); // refrescamos manualmente
+
+    // feedback visual
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          newValue ? "⭐ Se agregó a favoritos" : "❌ Se quitó de favoritos",
+        ),
+        duration: const Duration(seconds: 2),
+      ),
+    );
   }
 
   @override
@@ -194,11 +204,17 @@ class _HomeScreenState extends State<HomeScreen> {
                                       style: GoogleFonts.roboto(),
                                     ),
                                     trailing: IconButton(
-                                      icon: Icon(
-                                        (pet['isFavorite'] ?? false)
-                                            ? Icons.star
-                                            : Icons.star_border,
-                                        color: Colors.orange,
+                                      icon: AnimatedSwitcher(
+                                        duration: const Duration(milliseconds: 300),
+                                        transitionBuilder: (child, anim) =>
+                                            ScaleTransition(scale: anim, child: child),
+                                        child: Icon(
+                                          (pet['isFavorite'] ?? false)
+                                              ? Icons.star
+                                              : Icons.star_border,
+                                          key: ValueKey(pet['isFavorite']),
+                                          color: Colors.orange,
+                                        ),
                                       ),
                                       onPressed: () => _toggleFavorite(pet),
                                     ),

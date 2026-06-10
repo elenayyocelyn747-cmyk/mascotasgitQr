@@ -16,11 +16,14 @@ class _AddPetScreenState extends State<AddPetScreen> {
   final _formKey = GlobalKey<FormState>();
 
   final _nameController = TextEditingController();
+  final _ownerNameController = TextEditingController(); 
   final _speciesController = TextEditingController();
+  final _breedController = TextEditingController(); 
   final _ageController = TextEditingController();
   final _diseasesController = TextEditingController();
   final _phoneController = TextEditingController();
   final _addressController = TextEditingController();
+  final _descriptionController = TextEditingController(); 
 
   File? _imageFile;
   bool _loading = false;
@@ -51,14 +54,17 @@ class _AddPetScreenState extends State<AddPetScreen> {
       final userId = supabase.auth.currentUser!.id;
 
       await supabase.from('pets').insert({
+        'user_id': userId,
         'name': _nameController.text,
+        'ownerName': _ownerNameController.text, 
         'species': _speciesController.text,
+        'breed': _breedController.text, 
         'age': int.tryParse(_ageController.text),
         'diseases': _diseasesController.text,
         'ownerPhone': _phoneController.text,
         'address': _addressController.text,
+        'description': _descriptionController.text, 
         'photoUrl': uploadedUrl,
-        'user_id': userId,
       });
 
       if (!mounted) return;
@@ -82,7 +88,6 @@ class _AddPetScreenState extends State<AddPetScreen> {
 
     return Scaffold(
       body: Container(
-        // 👇 Fondo con gradiente adaptado
         decoration: BoxDecoration(
           gradient: LinearGradient(
             colors: isDark
@@ -117,11 +122,21 @@ class _AddPetScreenState extends State<AddPetScreen> {
                                 child: CircleAvatar(
                                   key: ValueKey(_imageFile),
                                   radius: 60,
-                                  backgroundImage: _imageFile != null
-                                      ? FileImage(_imageFile!)
-                                      : const AssetImage(
-                                          'assets/pet_placeholder.png')
-                                          as ImageProvider,
+                                  backgroundColor: Colors.teal.shade200,
+                                  child: _imageFile != null
+                                      ? ClipOval(
+                                          child: Image.file(
+                                            _imageFile!,
+                                            width: 120,
+                                            height: 120,
+                                            fit: BoxFit.cover,
+                                          ),
+                                        )
+                                      : const Icon(
+                                          Icons.camera_alt,
+                                          size: 40,
+                                          color: Colors.white,
+                                        ),
                                 ),
                               ),
                             ),
@@ -130,8 +145,14 @@ class _AddPetScreenState extends State<AddPetScreen> {
                                 validator: (v) => v == null || v.isEmpty
                                     ? "Ingresa un nombre"
                                     : null),
+                            _animatedField(_ownerNameController,
+                                "Nombre del dueño", Icons.person,
+                                validator: (v) => v == null || v.isEmpty
+                                    ? "Ingresa el nombre del dueño"
+                                    : null),
                             _animatedField(
                                 _speciesController, "Especie", Icons.category),
+                            _animatedField(_breedController, "Raza", Icons.pets),
                             _animatedField(_ageController, "Edad", Icons.cake,
                                 keyboardType: TextInputType.number),
                             _animatedField(_diseasesController, "Enfermedades",
@@ -141,6 +162,8 @@ class _AddPetScreenState extends State<AddPetScreen> {
                                 keyboardType: TextInputType.phone),
                             _animatedField(
                                 _addressController, "Dirección", Icons.home),
+                            _animatedField(_descriptionController, "Descripción",
+                                Icons.description),
                             const SizedBox(height: 24),
                             ElevatedButton.icon(
                               style: ElevatedButton.styleFrom(

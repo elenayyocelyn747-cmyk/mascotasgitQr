@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:url_launcher/url_launcher.dart'; // 👈 Import necesario
 
 class PetDetailScreen extends StatefulWidget {
   final String petId;
@@ -124,6 +125,26 @@ class _PetDetailScreenState extends State<PetDetailScreen> {
                                   '/qrScreen',
                                   arguments: pet['id'],
                                 );
+                              },
+                            ),
+                            const SizedBox(height: 12),
+                            _actionButton(
+                              color: Colors.green,
+                              icon: Icons.web,
+                              label: "Ver tarjeta web",
+                              onPressed: () async {
+                                final petId = pet['id']; // 👈 usamos el id real de la mascota
+                                final url = Uri.parse(
+                                  "https://lenas-projects-db973962.vercel.app/pet.html?id=$petId",
+                                );
+
+                                if (await canLaunchUrl(url)) {
+                                  await launchUrl(url, mode: LaunchMode.externalApplication);
+                                } else {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(content: Text("No se pudo abrir la tarjeta web")),
+                                  );
+                                }
                               },
                             ),
                             const SizedBox(height: 12),

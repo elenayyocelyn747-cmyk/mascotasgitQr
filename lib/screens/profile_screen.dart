@@ -3,7 +3,14 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 class ProfileScreen extends StatelessWidget {
-  const ProfileScreen({super.key});
+  final bool isDarkMode; // 👈 estado actual del tema
+  final void Function(bool) onThemeChanged; // 👈 callback para cambiar tema
+
+  const ProfileScreen({
+    super.key,
+    required this.isDarkMode,
+    required this.onThemeChanged,
+  });
 
   Future<void> _logout(BuildContext context) async {
     final supabase = Supabase.instance.client;
@@ -31,7 +38,6 @@ class ProfileScreen extends StatelessWidget {
         centerTitle: true,
       ),
       body: Container(
-        // 👇 Fondo con gradiente adaptado
         decoration: BoxDecoration(
           gradient: LinearGradient(
             colors: isDark
@@ -71,6 +77,23 @@ class ProfileScreen extends StatelessWidget {
                         ),
                       ),
                       const SizedBox(height: 32),
+
+                      // 👇 Switch de modo oscuro
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          const Text(
+                            "Modo oscuro",
+                            style: TextStyle(fontSize: 16),
+                          ),
+                          Switch(
+                            value: isDarkMode,
+                            onChanged: onThemeChanged,
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 24),
+
                       SizedBox(
                         width: double.infinity,
                         child: ElevatedButton.icon(

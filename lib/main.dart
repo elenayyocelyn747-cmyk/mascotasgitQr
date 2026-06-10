@@ -21,8 +21,21 @@ void main() async {
   runApp(const MyApp());
 }
 
-class MyApp extends StatelessWidget {
+class MyApp extends StatefulWidget {
   const MyApp({super.key});
+
+  @override
+  State<MyApp> createState() => _MyAppState();
+}
+
+class _MyAppState extends State<MyApp> {
+  ThemeMode _themeMode = ThemeMode.system; // 👈 estado inicial
+
+  void _changeTheme(bool isDark) {
+    setState(() {
+      _themeMode = isDark ? ThemeMode.dark : ThemeMode.light;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -30,15 +43,11 @@ class MyApp extends StatelessWidget {
 
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      title: 'Pet Manager',
-
-      // 👇 Tema claro
+      title: 'Huellitas',
       theme: ThemeData(
         brightness: Brightness.light,
         primarySwatch: Colors.teal,
         scaffoldBackgroundColor: Colors.grey[100],
-
-        // ⚠️ Opción 2 (solo si tu analyzer insiste en CardThemeData)
         cardTheme: CardThemeData(
           elevation: 4,
           shape: RoundedRectangleBorder(
@@ -57,8 +66,6 @@ class MyApp extends StatelessWidget {
           bodyMedium: TextStyle(fontSize: 16, color: Colors.black87),
         ),
       ),
-
-      // 👇 Tema oscuro
       darkTheme: ThemeData(
         brightness: Brightness.dark,
         primaryColor: Colors.teal,
@@ -79,9 +86,7 @@ class MyApp extends StatelessWidget {
           backgroundColor: Colors.teal,
         ),
       ),
-
-      // 👇 Usa el modo del sistema
-      themeMode: ThemeMode.system,
+      themeMode: _themeMode, // 👈 controlado por el switch
 
       initialRoute: session == null ? '/login' : '/home',
       onGenerateRoute: (settings) {
@@ -97,7 +102,10 @@ class MyApp extends StatelessWidget {
             builder = (context) => const HomeScreen();
             break;
           case '/profile':
-            builder = (context) => const ProfileScreen();
+            builder = (context) => ProfileScreen(
+                  isDarkMode: _themeMode == ThemeMode.dark,
+                  onThemeChanged: _changeTheme,
+                );
             break;
           case '/addPet':
             builder = (context) => const AddPetScreen();

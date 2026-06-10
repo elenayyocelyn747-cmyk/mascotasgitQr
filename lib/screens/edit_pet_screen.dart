@@ -24,6 +24,11 @@ class _EditPetScreenState extends State<EditPetScreen> {
   final _phoneController = TextEditingController();
   final _addressController = TextEditingController();
 
+  // 👇 nuevos controladores
+  final _ownerNameController = TextEditingController();
+  final _breedController = TextEditingController();
+  final _descriptionController = TextEditingController();
+
   File? _imageFile;
   String? _photoUrl;
   bool _loading = false;
@@ -53,6 +58,11 @@ class _EditPetScreenState extends State<EditPetScreen> {
       _phoneController.text = response['ownerPhone'] ?? '';
       _addressController.text = response['address'] ?? '';
       _photoUrl = response['photoUrl'];
+
+      // 👇 nuevos campos
+      _ownerNameController.text = response['ownerName'] ?? '';
+      _breedController.text = response['breed'] ?? '';
+      _descriptionController.text = response['description'] ?? '';
     }
 
     setState(() => _loading = false);
@@ -89,13 +99,17 @@ class _EditPetScreenState extends State<EditPetScreen> {
         'ownerPhone': _phoneController.text,
         'address': _addressController.text,
         'photoUrl': uploadedUrl,
+        // 👇 nuevos campos
+        'ownerName': _ownerNameController.text,
+        'breed': _breedController.text,
+        'description': _descriptionController.text,
       }).eq('id', widget.petId);
 
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text("Mascota actualizada")),
       );
-      Navigator.pop(context, true); // 👈 devolvemos true para refrescar al volver
+      Navigator.pop(context, true);
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -160,21 +174,26 @@ class _EditPetScreenState extends State<EditPetScreen> {
                                 ),
                               ),
                               const SizedBox(height: 16),
-                              _animatedField("Nombre", _nameController, Icons.pets,
+                              _animatedField("Nombre De la Mascota", _nameController, Icons.pets,
                                   validator: (v) => v == null || v.isEmpty
                                       ? "Ingresa un nombre"
                                       : null),
-                              _animatedField(
-                                  "Especie", _speciesController, Icons.category),
+                              _animatedField("Nombre del dueño", _ownerNameController,
+                                  Icons.person,
+                                  validator: (v) => v == null || v.isEmpty
+                                      ? "Ingresa el nombre del dueño"
+                                      : null),
+                              _animatedField("Especie", _speciesController, Icons.category),
+                              _animatedField("Raza", _breedController, Icons.pets),
                               _animatedField("Edad", _ageController, Icons.cake,
                                   keyboardType: TextInputType.number),
                               _animatedField("Enfermedades", _diseasesController,
                                   Icons.healing),
-                              _animatedField("Teléfono", _phoneController,
-                                  Icons.phone,
+                              _animatedField("Teléfono", _phoneController, Icons.phone,
                                   keyboardType: TextInputType.phone),
-                              _animatedField(
-                                  "Dirección", _addressController, Icons.home),
+                              _animatedField("Dirección", _addressController, Icons.home),
+                              _animatedField("Descripción", _descriptionController,
+                                  Icons.description),
                               const SizedBox(height: 24),
                               ElevatedButton.icon(
                                 style: ElevatedButton.styleFrom(

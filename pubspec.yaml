@@ -1,4 +1,4 @@
-name: mascotas_qr_nuevo
+name: Huellitas
 description: "A new Flutter project."
 publish_to: 'none'
 
@@ -24,6 +24,7 @@ dependencies:
   # Para pedir permisos en tiempo de ejecución (Android 13+)
   permission_handler: ^11.0.0
   url_launcher: ^6.1.7
+
 
 dev_dependencies:
   flutter_test:
